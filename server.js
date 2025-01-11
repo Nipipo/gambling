@@ -25,7 +25,7 @@ app.use(express.static('public'));
 // In-memory users list
 let users = [];
 
-// Function to handle the refresh every 5 minutes
+// Function to handle the refresh every 1 minute
 const refreshUserList = () => {
     io.emit('refreshTabs');  // Emit the refresh event to all clients
     console.log('User list refreshed');
@@ -73,8 +73,8 @@ io.on('connection', (socket) => {
     });
 });
 
-// Periodically refresh active users every 5 minutes
-setInterval(refreshUserList, 5 * 60 * 1000);  // Refresh every 5 minutes
+// Periodically refresh active users every 1 minute
+setInterval(refreshUserList, 1 * 60 * 1000);  // Refresh every 1 minute
 
 // Start the server
 server.listen(process.env.PORT || 3000, () => {

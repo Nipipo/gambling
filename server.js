@@ -23,7 +23,7 @@ app.use(cors({
 app.use(express.static('public'));
 
 // In-memory users list
-let users = [];  // Define the 'users' array to store connected users
+let users = [];
 
 // Setup Socket.io
 io.on('connection', (socket) => {
@@ -36,13 +36,27 @@ io.on('connection', (socket) => {
     });
 
     socket.on('placeBet', (data) => {
-        console.log(`${data.username} placed a bet on ${data.betSide} with ${data.amount} coins.`);
-        // Update bet stats here
+        const user = users.find(u => u.username === data.username);
+        if (user) {
+            if (data.betSide === 'Yes') {
+                user.yesBet += data.amount;
+            } else {
+                user.noBet += data.amount;
+            }
+        }
+        io.emit('userListUpdate', users); // Emit updated user list to all clients
+    });
+
+    socket.on('updateCoins', (data) => {
+        const user = users.find(u => u.username === data.username);
+        if (user) {
+            user.coins = data.coins;
+        }
+        io.emit('userListUpdate', users); // Emit updated user list to all clients
     });
 
     socket.on('disconnect', () => {
         console.log('A user disconnected');
-        // Remove the user from the list when they disconnect
         users = users.filter(user => user.username !== socket.username);
         io.emit('userListUpdate', users); // Emit updated user list to all clients
     });

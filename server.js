@@ -25,14 +25,25 @@ app.use(express.static('public'));
 // In-memory users list
 let users = [];
 
+// Function to handle the refresh every 5 minutes
+const refreshUserList = () => {
+    io.emit('refreshTabs');  // Emit the refresh event to all clients
+    console.log('User list refreshed');
+};
+
 // Setup Socket.io
 io.on('connection', (socket) => {
     console.log('A user connected');
 
     socket.on('userJoined', (user) => {
         console.log(`${user.username} has joined`);
-        users.push(user);  // Add user to the list when they join
-        io.emit('userListUpdate', users); // Emit updated user list to all clients
+        
+        // Check if user already exists and add them as a new player if not
+        const existingUser = users.find(u => u.username === user.username);
+        if (!existingUser) {
+            users.push(user);  // Add user to the list when they join
+            io.emit('userListUpdate', users); // Emit updated user list to all clients
+        }
     });
 
     socket.on('placeBet', (data) => {
@@ -61,6 +72,9 @@ io.on('connection', (socket) => {
         io.emit('userListUpdate', users); // Emit updated user list to all clients
     });
 });
+
+// Periodically refresh active users every 5 minutes
+setInterval(refreshUserList, 5 * 60 * 1000);  // Refresh every 5 minutes
 
 // Start the server
 server.listen(process.env.PORT || 3000, () => {

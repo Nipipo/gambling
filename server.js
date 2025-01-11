@@ -1,38 +1,21 @@
-const express = require('express');
-const http = require('http');
-const socketIo = require('socket.io');
+const io = require('socket.io')(server);
+let users = []; 
 
-const app = express();
-const server = http.createServer(app);
-const io = socketIo(server);
-
-let users = []; // Store player data
-
-app.use(express.static('public')); // Serve static files
-
-// When a user connects
 io.on('connection', (socket) => {
     console.log('A user connected');
 
-    // Send the current user list to the new client
-    socket.emit('userList', users);
-
-    // When a new user joins
-    socket.on('join', (user) => {
+    socket.on('userJoined', (user) => {
         users.push(user);
-        io.emit('userList', users); // Broadcast to all users
+        io.emit('userListUpdate', users); 
     });
 
-    // Handle disconnect
+    socket.on('placeBet', ({ username, betSide, amount }) => {
+        io.emit('bettingUpdate', { yesBet: 0, noBet: 0 });
+    });
+
     socket.on('disconnect', () => {
         console.log('A user disconnected');
         users = users.filter(user => user.socketId !== socket.id);
-        io.emit('userList', users); // Broadcast to all users
+        io.emit('userListUpdate', users); 
     });
-});
-
-// Dynamic port for deployment on Render or any hosting service
-const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
 });

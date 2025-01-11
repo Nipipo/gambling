@@ -22,13 +22,17 @@ app.use(cors({
 // Serve static files
 app.use(express.static('public'));
 
+// In-memory users list
+let users = [];  // Define the 'users' array to store connected users
+
 // Setup Socket.io
 io.on('connection', (socket) => {
     console.log('A user connected');
 
     socket.on('userJoined', (user) => {
         console.log(`${user.username} has joined`);
-        io.emit('userListUpdate', users); // Emit user list to all clients
+        users.push(user);  // Add user to the list when they join
+        io.emit('userListUpdate', users); // Emit updated user list to all clients
     });
 
     socket.on('placeBet', (data) => {
@@ -38,6 +42,9 @@ io.on('connection', (socket) => {
 
     socket.on('disconnect', () => {
         console.log('A user disconnected');
+        // Remove the user from the list when they disconnect
+        users = users.filter(user => user.username !== socket.username);
+        io.emit('userListUpdate', users); // Emit updated user list to all clients
     });
 });
 
